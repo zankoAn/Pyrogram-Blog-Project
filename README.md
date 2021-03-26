@@ -5,7 +5,8 @@ The goal of this project is to create a client bot that includes the following c
 2. forward admin message to specific user or all private chats of the bot.
 3. Check the status of the bot, for example has been reported or any other problem.
 4. Get information about users talking to the bot.
-5. ...
+5. Join the group and send a message
+6. ....
 
 
 ### Dependence:

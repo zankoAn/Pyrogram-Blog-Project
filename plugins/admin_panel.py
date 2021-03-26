@@ -17,11 +17,14 @@ def help_message(c, m):
     help_message = """
      ⚡️اپشن های موجود⚡️
     
-☔️ اضافه کردن پیام به ربات با کامند    ` add_msg/`
-☔️ حذف کردن پیام از ربات با کامند        `del_msg/`
-☔️ نمایش جملات موجود با کامند        `show_msg/`
-☔️ نمایش وضعیت ربات                               `info/`  
-☔️ چک کردن وضعیت ربات با کامند          `status/`    
+☔️ اضافه کردن پیام به ربات با کامند                     `add_msg/`
+☔️ حذف کردن پیام از ربات با کامند                       `del_msg/`
+☔️ نمایش جملات موجود با کامند                        `show_msg/`
+☔️ نمایش وضعیت ربات                                              `info/`
+☔️ چک کردن وضعیت ربات با کامند                          `status/`
+فوروارد کردن پیام                                                   `forward/`
+جوین شدن داخل گروه مورد نظر                         `join_chat/`
+ست کردن پیام بعد از جوین شدن ربات در گروه      `join_msg/`
 .
     """
 
@@ -36,7 +39,6 @@ def add_msg(c, m):
     """
 
     c.send_message(chat_id=m.chat.id, text=message_0)
-
     r.set("add_msg", "True")
 
 
@@ -89,7 +91,7 @@ def show_msg(c, m):
         c.send_message(chat_id=chat_id, text="❌جمله ای یافت نشد❌")
 
 
-@Client.on_message(filters.command("del_msg") & filters.private & filters.user(admin))
+@Client.on_message(filters.private & filters.user(admin) & filters.command("del_msg"))
 def del_msg(c, m):
     chat_id = m.chat.id
     if r.exists("messages"):
