@@ -25,5 +25,7 @@ The goal of this project is to create a client bot that includes the following c
 
 ### Run:
 add your **api_id** and **api_hash** to **config.ini**.
+
 add **admin id** to **plugins/__init__.py**.
+
 python main.py
