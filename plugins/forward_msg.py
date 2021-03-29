@@ -1,15 +1,8 @@
 from pyrogram import Client, filters
-import redis
+from plugins import r, admin
+
 import time
 
-r = redis.StrictRedis(
-    host='localhost',
-    port=6379,
-    db=1,
-    decode_responses=True
-)
-
-admin = your_id
 
 @Client.on_message(filters.private & filters.user(admin) & filters.command("forward"))
 def forward_msg_S1(c, m):

@@ -1,15 +1,5 @@
 from pyrogram import Client, filters
-import redis
-
-
-r = redis.StrictRedis(
-    host='localhost',
-    port=6379,
-    db=1,
-    decode_responses=True
-)
-
-admin = your_id
+from plugins import r, admin
 
 
 @Client.on_message(filters.private & filters.user(admin) & filters.command("help"))

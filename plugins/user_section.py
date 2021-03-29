@@ -1,16 +1,8 @@
 from pyrogram import Client, filters
+from plugins import r, admin
 
-import redis
 import time
 
-r = redis.StrictRedis(
-    host='localhost',
-    port=6379,
-    db=1,
-    decode_responses=True
-) 
-
-admin = your_id
 
 
 @Client.on_message(filters.private &~ filters.user([admin, "SpamBot"]), group=1)
