@@ -1,95 +1,157 @@
 from pyrogram import Client, filters
+
 from plugins import r, admin
 
 
-@Client.on_message(filters.private & filters.user(admin) & filters.command("help"))
-def help_message(c, m):
-    help_message = """
-     ⚡️اپشن های موجود⚡️
-    
-☔️ اضافه کردن پیام به ربات با کامند                     `add_msg/`
-☔️ حذف کردن پیام از ربات با کامند                       `del_msg/`
-☔️ نمایش جملات موجود با کامند                        `show_msg/`
-☔️ نمایش وضعیت ربات                                              `info/`
-☔️ چک کردن وضعیت ربات با کامند                          `status/`
-فوروارد کردن پیام                                                   `forward/`
-جوین شدن داخل گروه مورد نظر                         `join_chat/`
-ست کردن پیام بعد از جوین شدن ربات در گروه      `join_msg/`
-.
-    """
 
-    c.send_message(chat_id=m.chat.id, text=help_message)
+@Client.on_message(filters.private & filters.user(admin) & filters.command("help"))
+async def help_message(c, m):
+
+	chat_id = m.chat.id 
+
+	help_message = """⚡️ **اپشن های موجود** ⚡️
+        \n☔️ اضافه کردن پیام به ربات با کامند     /add_msg        
+		\n☔️ حذف کردن پیام از ربات با کامند       /del_msg        
+		\n☔️ نمایش جملات موجود با کامند       /show_msg        
+		\n☔️ نمایش وضعیت ربات     /info        
+		\n☔️ چک کردن وضعیت ربات با کامند      /status        
+		\n☔️ فوروارد کردن پیام       /forward        
+		\b☔️ جوین شدن داخل گروه مورد نظر     /join_chat        
+		\n☔️ ست کردن پیام بعد از جوین شدن ربات در گروه       /join_msg
+		\n.
+	"""
+
+	await c.send_chat_action(chat_id=chat_id, action="typing")
+
+	await c.send_message(chat_id=chat_id, text=help_message)
+
+
 
 
 @Client.on_message(filters.private & filters.user(admin) & filters.command("add_msg"))
-def add_msg(c, m):
-    message_0 = """
-        لطفا جمله یا جملات خود را ارسال کنید و در انتها کامند زیر را ارسال کنید:
-`/save`
+async def add_msg(c, m):
+    messages = """⚡️ **اضافه کردن پیام** ⚡️
+        \nلطفا جمله یا جملات خود را ارسال کنید و در انتها کامند زیر را ارسال کنید:
+        \n/save
     """
 
-    c.send_message(chat_id=m.chat.id, text=message_0)
-    r.set("add_msg", "True")
+    chat_id = m.chat.id 
+
+    await c.send_chat_action(chat_id=chat_id, action="typing")
+
+    await c.send_message(chat_id=chat_id, text=messages)
+
+    r.setbit("add:msg", 0, 1)
+
+
 
 
 @Client.on_message(filters.private & filters.user(admin), group=1)
-def get_input(c, m):
-    text_msg = m.text
-    chat_id = m.chat.id
+async def get_input(c, m):
 
-    if text_msg == "/save":
-        c.send_message(chat_id=chat_id,
-                       text="✅ جمله های شما با موفقیت ذخیره شد")
-        r.set("add_msg", "False")
+    msg = m.text
 
-    if r.get("add_msg") == "True" and text_msg != "/add_msg":
-        r.rpush("messages", text_msg)
+    if r.getbit("add:msg", 0) == 1 and not msg.startswith("/"):
 
-    if r.get("del_msg") == "True" and text_msg != '/del_msg':
-        try:
-            if text_msg == "*":
-                r.delete("messages")
+        msg_counter = r.incr("New:Msg")
 
-            else:
-                msg_number = r.lrange("messages", 0, -1)[int(text_msg)]
-                r.lrem("messages", 0, msg_number)
+        r.sadd("Messages", f"{msg_counter}:{msg}")
 
-            c.send_message(chat_id=chat_id,
-                           text="جمله/جملات  شما با موفقیت حذف شد ✅")
-            r.set("del_msg", "False")
+    elif msg == "/save":
+        chat_id = m.chat.id
 
-        except ValueError:
-            c.send_message(chat_id=chat_id,
-                           text="❌لطفا عدد مربوط به جمله ها را ارسال کنید❌")
+        await c.send_chat_action(chat_id=chat_id, action="typing")
 
-        except IndexError:
-            c.send_message(chat_id=chat_id,
-                           text="❌عدد وارد شده بیشتر از تعداد پیام ها میباشد❌")
+        await c.send_message(chat_id=chat_id, text="""⚡️ **اضافه کردن پیام** ⚡️
+            \n✅ جمله های شما با موفقیت ذخیره شد
+            \n.
+        """)
+
+        r.setbit("add:msg", 0, 0)
+
+
 
 
 @Client.on_message(filters.private & filters.user(admin) & filters.command("show_msg"))
-def show_msg(c, m):
-    chat_id = m.chat.id
-    if r.exists("messages"):
-        messages = ""
-        for k, v in dict(enumerate(r.lrange("messages", 0, -1))).items():
-            messages += str(k) + ": " + v + "\n" + "_"*30 + "\n"
+async def show_msg(c, m):
 
-        c.send_message(chat_id=chat_id, text=messages, parse_mode="html")
+    chat_id = m.chat.id 
+
+    await c.send_chat_action(chat_id=chat_id, action="typing")
+
+    if r.exists("Messages"):
+        messages = "⚡️ **نمایش جمله ها** ⚡️\n"
+
+        data = sorted(r.smembers("Messages"), key=lambda x: x.split(":")[0])
+
+        for item in data:
+
+            item = item.split(":", 1)
+
+            separator = "➖" * 12
+
+            messages += f"`{item[0]}`:{item[1]}\n{separator}\n"
+
+        await c.send_message(chat_id=chat_id, text=messages)
 
     else:
-        c.send_message(chat_id=chat_id, text="❌جمله ای یافت نشد❌")
+        await c.send_message(chat_id=chat_id, text="❌جمله ای یافت نشد❌")
+
+
 
 
 @Client.on_message(filters.private & filters.user(admin) & filters.command("del_msg"))
-def del_msg(c, m):
-    chat_id = m.chat.id
-    if r.exists("messages"):
-        message = "لطفا `شماره` جمله مورد نظر خود ارسال کنید.🗑"
+async def del_msg(c, m):
 
-        c.send_message(chat_id=chat_id, text=message)
+    chat_id = m.chat.id 
 
-        r.set("del_msg", "True")
+    await c.send_chat_action(chat_id=chat_id, action="typing")
+
+    if r.exists("Messages"):
+
+        message = """⚡️ **حذف کردن جمه ها** ⚡️            
+            \nلطفا شماره جمله مورد نظر خود ارسال کنید. 🗑            
+            \nو یا برای حذف همه جمله ها  `*` را ارسال نمایید
+            \n.
+        """
+
+        await c.send_message(chat_id=chat_id, text=message)
+
+        r.setbit("del:msg", 0, 1)
 
     else:
-        c.send_message(chat_id=chat_id, text="❌جمله ای یافت نشد❌")
+        await c.send_message(chat_id=chat_id, text="❌جمله ای یافت نشد❌")
+
+
+
+
+@Client.on_message(filters.private & filters.user(admin), group=2)
+async def get_message_id(c, m):
+
+    msg = m.text
+
+    if r.getbit("del:msg", 0) == 1 and not msg.startswith("/"):
+        chat_id = m.chat.id 
+        await c.send_chat_action(chat_id=chat_id, action="typing")
+
+        if msg == "*":
+            r.delete("Messages")
+            r.setbit("del:msg", 0, 0)
+            await c.send_message(chat_id=chat_id, text="""⚡️ **حذف همه پیام ها** ⚡️\n
+                \nتمامی جملات شما با موفقیت حذف شد ✅"""
+            )
+
+        else:
+            msg_number = r.sscan("Messages", match=f"{msg}:*")[1]
+
+            if msg_number:
+                r.srem("Messages", msg_number[0])
+                r.setbit("del:msg", 0, 0)
+                await c.send_message(chat_id=chat_id, text="""⚡️ **حذف پیام** ⚡️\n
+                    \n جمله شما با موفقیت حذف شد ✅""" 
+                )
+
+            else:
+                messages = "⚡️ **حذف پیام** ⚡️\n\n❌جمله ای یافت نشد❌"
+
+                await c.send_message(chat_id=chat_id, text=messages)
