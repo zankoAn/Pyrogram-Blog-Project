@@ -1,18 +1,37 @@
 from pyrogram import Client, filters
+
 from plugins import r, admin
 
-import time
+import asyncio
 
 
 
-@Client.on_message(filters.private &~ filters.user([admin, "SpamBot"]), group=1)
-def PrivateUserChat(c, m):
-    c.send_chat_action(m.chat.id, 'typing')
-    time.sleep(0.15)
+@Client.on_message(filters.private &~ filters.user([admin, "SpamBot"]), group=3)
+async def PrivateUserChat(c, m):
 
-    for message in r.lrange("messages", 0, -1):
-        c.send_message(chat_id=m.chat.id, text=message)
-        
-    r.sadd("users", m.from_user.id)
+    chat_id = m.chat.id
+    
+    if r.exists("Messages"):
+        data = sorted(r.smembers("Messages"), key=lambda x: x.split(":")[0])
+
+        for message in data: 
+            await c.send_chat_action(chat_id=chat_id, action='typing')
+            await asyncio.sleep(0.17)
+
+            await c.send_message(chat_id=m.chat.id, text=message.split(":", 1)[1])
+
+            await asyncio.sleep(3)
+
+    else:
+        await c.send_chat_action(chat_id=chat_id, action='typing')
+        await asyncio.sleep(0.15)
+
+        message=f"سلام {m.from_user.first_name} ✋"
+
+        await c.send_message(chat_id=m.chat.id, text=message)
+
+    current_user = await c.get_me()
+    r.sadd(f"users:{current_user.id}", m.from_user.id)
+
 
 
