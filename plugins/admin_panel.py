@@ -51,7 +51,7 @@ async def get_input(c, m):
 
     msg = m.text
 
-    if r.getbit("add:msg", 0) == 1 and not msg.startswith("/"):
+    if r.getbit("add:msg", 0) == 1 and msg and not msg.startswith("/"):
 
         msg_counter = r.incr("New:Msg")
 
@@ -130,7 +130,7 @@ async def get_message_id(c, m):
 
     msg = m.text
 
-    if r.getbit("del:msg", 0) == 1 and not msg.startswith("/"):
+    if r.getbit("del:msg", 0) == 1 and msg and not msg.startswith("/"):
         chat_id = m.chat.id 
         await c.send_chat_action(chat_id=chat_id, action="typing")
 
